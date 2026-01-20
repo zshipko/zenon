@@ -90,6 +90,7 @@ let build ?output ?(ignore = []) ~arg ~cflags ~ldflags ~path ~builds ~file ~run
         in
         Hashtbl.replace ldflags_by_lang lang (flag :: flags))
       lang_ldflags;
+    let reset = not (List.is_empty file) in
     List.iter
       (fun build ->
         if
@@ -127,9 +128,7 @@ let build ?output ?(ignore = []) ~arg ~cflags ~ldflags ~path ~builds ~file ~run
               in
               Flags.add_link_flags existing_flags (List.rev flags))
             ldflags_by_lang;
-          let () =
-            Build.add_source_files ~reset:(not (List.is_empty file)) build file
-          in
+          let () = Build.add_source_files ~reset build file in
           Plan.build plan
             {
               build with
