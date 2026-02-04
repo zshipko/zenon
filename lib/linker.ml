@@ -240,7 +240,7 @@ let ats2 =
   {
     name = "patscc";
     exts = Compiler.ats2.ext;
-    has_runtime = true;
+    has_runtime = false;
     command = c_like [ "patscc" ];
     link_type = Executable;
     wrap_c_flags = Compiler.ats2.wrap_c_flags;
