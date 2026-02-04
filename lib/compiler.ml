@@ -70,14 +70,22 @@ let ghc =
           | None -> []
           | Some (p, _) -> [ "-hidir"; Eio.Path.native_exn p ]
         in
+        let objects = List.of_seq objects in
+        let hidir =
+          List.fold_left
+            (fun hidir path ->
+              match Eio.Path.split path.Object_file.path with
+              | None -> hidir
+              | Some (p, _) -> "-hidir" :: Eio.Path.native_exn p :: hidir)
+            hidir objects
+        in
         let include_paths =
-          Seq.filter_map
+          List.filter_map
             (fun obj ->
               match Eio.Path.split obj.Object_file.path with
               | None -> None
               | Some (p, _) -> Some ("-i" ^ Eio.Path.native_exn p))
             objects
-          |> List.of_seq
         in
         [
           "ghc";
