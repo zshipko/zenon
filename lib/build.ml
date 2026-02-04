@@ -101,23 +101,29 @@ let rec collect_all count check_ignore root path =
 let locate_files t = function
   | [] -> Seq.empty
   | patterns ->
-      let ignore = Re.alt t.ignore |> Re.compile in
-      let check_ignore f =
-        match t.ignore with [] -> true | _ -> not (Re.execp ignore f)
-      in
-      let count = ref 0 in
-      let all_files = collect_all count check_ignore t.source t.source in
-      let seen = Hashtbl.create !count in
-      let re = Re.alt patterns |> Re.compile in
-      Seq.filter_map
-        (fun path ->
-          let path_str = Eio.Path.native_exn path in
-          let rel_path = Util.relative_to t.source path in
-          if (not (Hashtbl.mem seen path_str)) && Re.execp re rel_path then (
-            Hashtbl.add seen path_str true;
-            Some path)
-          else None)
-        all_files
+    let ignore_re = Re.alt t.ignore |> Re.compile in
+    let check_ignore f =
+      match t.ignore with [] -> true | _ -> not (Re.execp ignore_re f)
+    in
+    let count = ref 0 in
+    let all_files = collect_all count check_ignore t.source t.source |> List.of_seq in
+    let seen = Hashtbl.create (List.length all_files) in
+    List.concat_map
+      (fun pattern ->
+        let re = Re.compile pattern in
+        List.filter_map
+          (fun path ->
+            let path_str = Eio.Path.native_exn path in
+            if Hashtbl.mem seen path_str then None
+            else
+              let rel_path = Util.relative_to t.source path in
+              if Re.execp re rel_path then (
+                Hashtbl.add seen path_str true;
+                Some path)
+              else None)
+          all_files)
+      patterns
+    |> List.to_seq
 
 let locate_source_files t : Source_file.t Seq.t =
   locate_files t t.files

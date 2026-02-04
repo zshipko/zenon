@@ -65,28 +65,25 @@ let ghc =
     name = "ghc";
     command =
       (fun ~flags ~objects ~output ->
-        let hidir =
+        let objects = List.of_seq objects in
+        let output_dir =
           match Eio.Path.split output.Object_file.path with
           | None -> []
-          | Some (p, _) -> [ "-hidir"; Eio.Path.native_exn p ]
+          | Some (p, _) -> [ Eio.Path.native_exn p ]
         in
-        let objects = List.of_seq objects in
-        let hidir =
-          List.fold_left
-            (fun hidir path ->
-              match Eio.Path.split path.Object_file.path with
-              | None -> hidir
-              | Some (p, _) -> "-hidir" :: Eio.Path.native_exn p :: hidir)
-            hidir objects
-        in
-        let include_paths =
+        let dep_dirs =
           List.filter_map
             (fun obj ->
               match Eio.Path.split obj.Object_file.path with
               | None -> None
-              | Some (p, _) -> Some ("-i" ^ Eio.Path.native_exn p))
+              | Some (p, _) -> Some (Eio.Path.native_exn p))
             objects
         in
+        let hidir_dirs = List.sort_uniq String.compare (output_dir @ dep_dirs) in
+        let include_dirs = List.sort_uniq String.compare dep_dirs in
+
+        let hidir = List.concat_map (fun p -> [ "-hidir"; p ]) hidir_dirs in
+        let include_paths = List.map (fun p -> "-i" ^ p) include_dirs in
         [
           "ghc";
           "-fdiagnostics-color=always";
@@ -118,19 +115,26 @@ let ocaml =
     name = "ocamlfind";
     command =
       (fun ~flags ~objects ~output ->
-        let p, s = output.Object_file.path in
         let o_path =
+          let p, s = output.Object_file.path in
           let s = Filename.chop_extension s ^ ".o" in
           (p, s)
         in
-        let include_paths =
-          List.concat_map
+        let output_dir =
+          match Eio.Path.split output.Object_file.path with
+          | None -> []
+          | Some (p, _) -> [ Eio.Path.native_exn p ]
+        in
+        let dep_dirs =
+          List.filter_map
             (fun obj ->
               match Eio.Path.split obj.Object_file.path with
-              | None -> []
-              | Some (p, _) -> [ "-I"; Eio.Path.native_exn p ])
+              | None -> None
+              | Some (p, _) -> Some (Eio.Path.native_exn p))
             (List.of_seq objects)
         in
+        let dirs = List.sort_uniq String.compare (output_dir @ dep_dirs) in
+        let include_paths = List.concat_map (fun p -> [ "-I"; p ]) dirs in
         [
           "ocamlfind";
           "ocamlopt";

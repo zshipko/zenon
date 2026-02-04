@@ -72,8 +72,8 @@ build:
     root: simple-hs
     target: simple-hs/run
     files:
-      - 'Lib.hs'
-      - 'Main.hs'
+      - 'lib/Lib.hs'
+      - 'bin/Main.hs'
 
   # Test 7: Standard ML executable
   - name: simple-sml
