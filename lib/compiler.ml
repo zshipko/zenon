@@ -163,9 +163,9 @@ let ocaml =
     wrap_c_flags =
       (fun flags ->
         let compile =
-          List.concat_map (fun x -> [ "-cclib"; x ]) flags.Flags.compile
+          List.concat_map (fun x -> [ "-ccopt"; x ]) flags.Flags.compile
         in
-        let link = List.concat_map (fun x -> [ "-ccopt"; x ]) flags.link in
+        let link = List.concat_map (fun x -> [ "-cclib"; x ]) flags.link in
         Flags.v ~compile ~link ());
   }
 
