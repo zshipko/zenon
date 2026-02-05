@@ -13,7 +13,7 @@ type t = {
   wrap_c_flags : Flags.t -> Flags.t;
 }
 
-let c_like ?(force_color = "-fcolor-diagnostics") cc =
+let c_like ?(force_color = "-fdiagnostics-color=always") cc =
  fun ~flags ~objects:_ ~output ->
   cc
   @ [ force_color; "-c"; "-o"; Eio.Path.native_exn output.Object_file.path ]
@@ -79,7 +79,9 @@ let ghc =
               | Some (p, _) -> Some (Eio.Path.native_exn p))
             objects
         in
-        let hidir_dirs = List.sort_uniq String.compare (output_dir @ dep_dirs) in
+        let hidir_dirs =
+          List.sort_uniq String.compare (output_dir @ dep_dirs)
+        in
         let include_dirs = List.sort_uniq String.compare dep_dirs in
 
         let hidir = List.concat_map (fun p -> [ "-hidir"; p ]) hidir_dirs in
