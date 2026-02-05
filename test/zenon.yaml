@@ -116,5 +116,5 @@ build:
     root: simple-ml
     target: simple-ml/run
     files:
-      - 'a.ml'
-      - 'hello.ml'
+      - 'src/a.ml'
+      - 'bin/hello.ml'
