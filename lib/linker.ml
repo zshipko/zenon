@@ -41,7 +41,7 @@ let link t mgr ~output ~checker ~objs ~flags ~build_dir =
      with _ -> ());
     raise exn
 
-let c_like ?(force_color = "-fdiagnostics-color") cc =
+let c_like ?(force_color = "-fdiagnostics-color=always") cc =
  fun ~flags ~objs ~output ->
   let objs =
     List.map (fun obj -> Eio.Path.native_exn obj.Object_file.path) objs
