@@ -3,6 +3,7 @@ open Common
 
 let build ?output ?(ignore = []) ~arg ~cflags ~ldflags ~path ~builds ~file ~run
     ~pkg ~(linker : string option) ~log_level ~watch () =
+  let path = Unix.realpath path in
   Eio_posix.run @@ fun env ->
   let get_config_path () =
     let eio_path = Eio.Path.(env#fs / Unix.realpath path) in
@@ -150,6 +151,19 @@ let build ?output ?(ignore = []) ~arg ~cflags ~ldflags ~path ~builds ~file ~run
   in
 
   let initial_build_configs = load_config ~log_level ~builds env path in
+
+  (* If the user specified targets, check that they are all valid *)
+  if not (List.is_empty builds) then (
+    let found_build_names =
+      List.map (fun (b : Build.t) -> b.name) initial_build_configs
+      |> String_set.of_list
+    in
+    let requested_build_names = String_set.of_list builds in
+    let missing = String_set.diff requested_build_names found_build_names in
+    if not (String_set.is_empty missing) then
+      Fmt.failwith "Unknown build targets: %s"
+        (String.concat ", " (String_set.to_list missing)));
+
   let initial_mtimes = do_build initial_build_configs in
 
   if watch then
